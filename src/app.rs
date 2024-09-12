@@ -48,7 +48,8 @@ impl App {
 
 impl App {
     fn handle_events(&mut self) -> Result<()> {
-        let timeout = Duration::from_secs_f32(1.0 / 20.0);
+        // This timeout makes sure the frame gets updated even without input
+        let timeout = Duration::from_secs_f32(1.0 / 120.0);
         if event::poll(timeout)? {
             if let Event::Key(key) = event::read()? {
                 if key.kind != event::KeyEventKind::Release {
