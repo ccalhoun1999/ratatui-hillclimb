@@ -1,14 +1,14 @@
 use nalgebra::SVector;
-use rapier2d::dynamics::RigidBodyHandle;
-use rapier2d::prelude::nalgebra;
-use rapier2d::prelude::{
+use rapier2d_f64::dynamics::RigidBodyHandle;
+use rapier2d_f64::prelude::nalgebra;
+use rapier2d_f64::prelude::{
     vector, CCDSolver, ColliderBuilder, ColliderSet, DefaultBroadPhase, ImpulseJointSet,
     IntegrationParameters, IslandManager, MultibodyJointSet, NarrowPhase, PhysicsPipeline,
     QueryPipeline, RigidBodyBuilder, RigidBodySet,
 };
 
 pub struct Game {
-    gravity: SVector<f32, 2>,
+    gravity: SVector<f64, 2>,
     rigid_body_set: RigidBodySet,
     collider_set: ColliderSet,
     ball_body_handle: RigidBodyHandle,
@@ -86,11 +86,7 @@ impl Game {
         // println!("Ball altitude: {}", ball_body.translation().y);
     }
 
-    // Even though physics is 32 bit, ratatui draws at 64 bit coordinates
     pub fn get_ball_height(&self) -> f64 {
-        self.rigid_body_set[self.ball_body_handle]
-            .translation()
-            .y
-            .into()
+        self.rigid_body_set[self.ball_body_handle].translation().y
     }
 }
