@@ -1,0 +1,8 @@
+[package]
+name = "ratatui-hillclimb"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+rapier2d = "0.22.0"
+ratatui = "0.28.1"
