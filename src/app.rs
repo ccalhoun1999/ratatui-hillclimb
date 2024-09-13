@@ -1,5 +1,4 @@
 use color_eyre::eyre::Result;
-use std::time::Duration;
 
 use ratatui::{
     crossterm::event::{self, KeyCode},
@@ -7,7 +6,10 @@ use ratatui::{
     DefaultTerminal,
 };
 
-use crate::{game::Game, ui};
+use crate::{
+    game::Game,
+    tui::{ui, Event, Tui},
+};
 
 pub struct App {
     pub marker: Marker,
@@ -33,17 +35,18 @@ impl Default for App {
 
 impl App {
     pub async fn run(&mut self, terminal: &mut DefaultTerminal) -> Result<()> {
-        let mut events = ui::EventHandler::new();
+        let mut tui = Tui::new().tick_rate(1.0).frame_rate(30.0);
+        tui.start();
 
         loop {
-            let event = events.next().await?;
+            let event = tui.next().await?;
 
-            self.handle_events(event);
+            if let Event::Render = event.clone() {
+                terminal.draw(|f| ui(f, self))?;
+            }
 
-            // self.update();
-            terminal.draw(|f| ui(f, self))?;
+            self.handle_events(event)?;
 
-            // self.handle_events()?;
             self.game.physics_loop();
 
             if self.quitting {
@@ -60,11 +63,11 @@ impl App {
 }
 
 impl App {
-    fn handle_events(&mut self, event: ui::Event) -> Result<()> {
+    fn handle_events(&mut self, event: Event) -> Result<()> {
         // This timeout makes sure the frame gets updated even without input
         // let timeout = Duration::from_secs_f32(1.0 / 120.0);
 
-        if let ui::Event::Key(key) = event {
+        if let Event::Key(key) = event {
             if key.kind != event::KeyEventKind::Release {
                 match key.code {
                     KeyCode::Char('q') => self.quitting = true,

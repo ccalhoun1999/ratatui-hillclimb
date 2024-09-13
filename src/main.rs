@@ -1,9 +1,8 @@
 use crate::app::App;
-use crate::ui::ui;
 
 mod app;
 mod game;
-mod ui;
+mod tui;
 
 #[tokio::main]
 async fn main() -> color_eyre::Result<()> {
