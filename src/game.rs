@@ -71,7 +71,7 @@ impl Game {
 
     // TODO: the physics loop needs to be detached from the game loop
     // as rendering is done slowly
-    pub fn physics_loop(&mut self) {
+    pub fn step_physics(&mut self) {
         // self.timer.pause();
         // self.integration_parameters.dt = self.timer.time();
         self.physics_pipeline.step(

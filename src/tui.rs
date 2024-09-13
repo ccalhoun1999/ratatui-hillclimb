@@ -19,7 +19,7 @@ use crate::app::App;
 
 #[derive(Clone, Copy)]
 pub enum Event {
-    Quit,
+    // Quit,
     Error,
     Tick,
     Render,

@@ -5,11 +5,20 @@ use ratatui::{
     symbols::Marker,
     DefaultTerminal,
 };
+use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 
 use crate::{
     game::Game,
     tui::{ui, Event, Tui},
 };
+
+#[derive(Clone, Copy)]
+pub enum Action {
+    None,
+    Tick,
+    Quit,
+    Render,
+}
 
 pub struct App {
     pub marker: Marker,
@@ -17,10 +26,13 @@ pub struct App {
     // pub y: f64,
     pub game: Game,
     quitting: bool,
+    action_tx: UnboundedSender<Action>,
+    action_rx: UnboundedReceiver<Action>,
 }
 
 impl Default for App {
     fn default() -> App {
+        let (action_tx, action_rx) = mpsc::unbounded_channel::<Action>();
         App {
             // TODO: Customize the marker, I'd like braille but
             // it breaks overlapping colors
@@ -29,25 +41,38 @@ impl Default for App {
             // y: 0.0,
             game: Game::new(),
             quitting: false,
+            action_tx,
+            action_rx,
         }
     }
 }
 
 impl App {
     pub async fn run(&mut self, terminal: &mut DefaultTerminal) -> Result<()> {
-        let mut tui = Tui::new().tick_rate(1.0).frame_rate(30.0);
+        let mut tui = Tui::new().tick_rate(60.0).frame_rate(60.0);
         tui.start();
 
         loop {
             let event = tui.next().await?;
 
-            if let Event::Render = event.clone() {
-                terminal.draw(|f| ui(f, self))?;
+            match event {
+                // Event::Quit => self.action_tx.send(Action::Quit)?,
+                Event::Tick => self.action_tx.send(Action::Tick)?,
+                Event::Render => self.action_tx.send(Action::Render)?,
+                Event::Key(_) => {
+                    let action = self.get_action(event);
+                    self.action_tx.send(action.clone())?;
+                }
+                _ => {}
+            };
+
+            while let Ok(action) = self.action_rx.try_recv() {
+                self.handle_events(action.clone());
+
+                if let Action::Render = action {
+                    terminal.draw(|f| ui(f, self))?;
+                }
             }
-
-            self.handle_events(event)?;
-
-            self.game.physics_loop();
 
             if self.quitting {
                 break;
@@ -63,20 +88,29 @@ impl App {
 }
 
 impl App {
-    fn handle_events(&mut self, event: Event) -> Result<()> {
+    fn handle_events(&mut self, action: Action) {
         // This timeout makes sure the frame gets updated even without input
         // let timeout = Duration::from_secs_f32(1.0 / 120.0);
 
-        if let Event::Key(key) = event {
-            if key.kind != event::KeyEventKind::Release {
-                match key.code {
-                    KeyCode::Char('q') => self.quitting = true,
-                    _ => {}
-                }
-            }
-        }
+        match action {
+            Action::Quit => self.quitting = true,
+            Action::Tick => self.game.step_physics(),
+            _ => {}
+        };
 
         // if event::poll(timeout)? {
-        Ok(())
+        // Ok(())
+    }
+
+    fn get_action(&self, event: Event) -> Action {
+        if let Event::Key(key) = event {
+            if key.kind != event::KeyEventKind::Release {
+                return match key.code {
+                    KeyCode::Char('q') => Action::Quit,
+                    _ => return Action::None,
+                };
+            }
+        };
+        Action::None
     }
 }
