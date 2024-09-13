@@ -1,4 +1,5 @@
 use nalgebra::SVector;
+// use rapier2d_f64::counters::Timer;
 use rapier2d_f64::dynamics::RigidBodyHandle;
 use rapier2d_f64::prelude::nalgebra;
 use rapier2d_f64::prelude::{
@@ -21,6 +22,7 @@ pub struct Game {
     multibody_joint_set: MultibodyJointSet,
     ccd_solver: CCDSolver,
     query_pipeline: QueryPipeline,
+    // pub timer: Timer,
     // physics_hooks: dyn PhysicsHooks,
     // event_handler: &EventHandler,
 }
@@ -42,6 +44,9 @@ impl Game {
         let ball_body_handle = rigid_body_set.insert(rigid_body);
         collider_set.insert_with_parent(collider, ball_body_handle, &mut rigid_body_set);
 
+        // let mut timer = Timer::new();
+        // timer.start();
+
         Game {
             gravity: vector![0.0, -9.81],
             rigid_body_set,
@@ -56,6 +61,7 @@ impl Game {
             multibody_joint_set: MultibodyJointSet::new(),
             ccd_solver: CCDSolver::new(),
             query_pipeline: QueryPipeline::new(),
+            // timer,
             // physics_hooks: (),
             // event_handler: (),
         }
@@ -66,6 +72,8 @@ impl Game {
     // TODO: the physics loop needs to be detached from the game loop
     // as rendering is done slowly
     pub fn physics_loop(&mut self) {
+        // self.timer.pause();
+        // self.integration_parameters.dt = self.timer.time();
         self.physics_pipeline.step(
             &self.gravity,
             &self.integration_parameters,
@@ -81,6 +89,7 @@ impl Game {
             &(),
             &(),
         );
+        // self.timer.resume();
 
         // let ball_body = &self.rigid_body_set[self.ball_body_handle];
         // println!("Ball altitude: {}", ball_body.translation().y);

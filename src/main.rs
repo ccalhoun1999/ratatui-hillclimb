@@ -5,10 +5,11 @@ mod app;
 mod game;
 mod ui;
 
-fn main() -> std::io::Result<()> {
+#[tokio::main]
+async fn main() -> color_eyre::Result<()> {
     let mut terminal = ratatui::init();
     terminal.clear()?;
-    let result = App::default().run(&mut terminal);
+    let result = App::default().run(&mut terminal).await;
     ratatui::restore();
     result
 }

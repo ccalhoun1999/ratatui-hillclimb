@@ -1,7 +1,8 @@
-use std::{io::Result, time::Duration};
+use color_eyre::eyre::Result;
+use std::time::Duration;
 
 use ratatui::{
-    crossterm::event::{self, Event, KeyCode},
+    crossterm::event::{self, KeyCode},
     symbols::Marker,
     DefaultTerminal,
 };
@@ -31,13 +32,25 @@ impl Default for App {
 }
 
 impl App {
-    pub fn run(&mut self, terminal: &mut DefaultTerminal) -> Result<()> {
-        while !self.quitting {
+    pub async fn run(&mut self, terminal: &mut DefaultTerminal) -> Result<()> {
+        let mut events = ui::EventHandler::new();
+
+        loop {
+            let event = events.next().await?;
+
+            self.handle_events(event);
+
+            // self.update();
             terminal.draw(|f| ui(f, self))?;
 
-            self.handle_events()?;
+            // self.handle_events()?;
             self.game.physics_loop();
+
+            if self.quitting {
+                break;
+            }
         }
+
         Ok(())
     }
 
@@ -47,20 +60,20 @@ impl App {
 }
 
 impl App {
-    fn handle_events(&mut self) -> Result<()> {
+    fn handle_events(&mut self, event: ui::Event) -> Result<()> {
         // This timeout makes sure the frame gets updated even without input
-        let timeout = Duration::from_secs_f32(1.0 / 120.0);
-        if event::poll(timeout)? {
-            if let Event::Key(key) = event::read()? {
-                if key.kind != event::KeyEventKind::Release {
-                    match key.code {
-                        KeyCode::Char('q') => self.quitting = true,
-                        _ => {}
-                    }
+        // let timeout = Duration::from_secs_f32(1.0 / 120.0);
+
+        if let ui::Event::Key(key) = event {
+            if key.kind != event::KeyEventKind::Release {
+                match key.code {
+                    KeyCode::Char('q') => self.quitting = true,
+                    _ => {}
                 }
             }
         }
 
+        // if event::poll(timeout)? {
         Ok(())
     }
 }
