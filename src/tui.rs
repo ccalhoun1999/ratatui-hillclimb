@@ -5,7 +5,7 @@ use ratatui::{
     layout::{Constraint, Layout},
     style::Color,
     widgets::{
-        canvas::{Canvas, Circle, Rectangle},
+        canvas::{Canvas, Circle, Line, Rectangle},
         Block, BorderType, Paragraph, Widget,
     },
     Frame,
@@ -177,26 +177,61 @@ fn game_canvas(app: &App) -> impl Widget + '_ {
         )
         .marker(app.marker)
         .paint(|ctx| {
-            let car_x = app.get_ball_x();
-            let car_y = app.get_ball_y();
             // TODO: Refactor drawing the car out to a function that
             // takes the game state for location and sizes
-            ctx.draw(&Rectangle {
-                x: car_x,
-                y: car_y,
-                width: 40.0,
-                height: 12.0,
+            // Draw the car body
+            let car_body_angle = app.game.get_car_body_angle();
+            let car_body_vertical_angle = car_body_angle * (3.1415 / 2.0);
+            let bottom_left = [app.game.get_car_body_x(), app.game.get_car_body_y()];
+            let bottom_right = [
+                bottom_left[0] + car_body_angle.cos() * 40.0,
+                bottom_left[1] + car_body_angle.sin() * 40.0,
+            ];
+            let top_left = [
+                bottom_left[0] + car_body_vertical_angle.cos() * 12.0,
+                bottom_left[0] + car_body_vertical_angle.sin() * 12.0,
+            ];
+            let top_right = [
+                bottom_right[0] + car_body_vertical_angle.cos() * 12.0,
+                bottom_right[0] + car_body_vertical_angle.sin() * 12.0,
+            ];
+            ctx.draw(&Line {
+                x1: bottom_left[0],
+                y1: bottom_left[1],
+                x2: bottom_right[0],
+                y2: bottom_right[1],
                 color: Color::White,
             });
+            // ctx.draw(&Line {
+            //     x1: top_left[0],
+            //     y1: top_left[1],
+            //     x2: top_right[0],
+            //     y2: top_right[1],
+            //     color: Color::White,
+            // });
+            // ctx.draw(&Line {
+            //     x1: bottom_left[0],
+            //     y1: bottom_left[1],
+            //     x2: top_left[0],
+            //     y2: top_left[1],
+            //     color: Color::White,
+            // });
+            // ctx.draw(&Line {
+            //     x1: bottom_right[0],
+            //     y1: bottom_right[1],
+            //     x2: top_right[0],
+            //     y2: top_right[1],
+            //     color: Color::White,
+            // });
             ctx.draw(&Circle {
-                x: car_x,
-                y: car_y,
+                x: app.game.get_front_wheel_x(),
+                y: app.game.get_front_wheel_y(),
                 radius: 6.0,
                 color: Color::Black,
             });
             ctx.draw(&Circle {
-                x: car_x + 40.0,
-                y: car_y,
+                x: app.game.get_rear_wheel_x(),
+                y: app.game.get_rear_wheel_y(),
                 radius: 6.0,
                 color: Color::Black,
             });
@@ -208,9 +243,9 @@ fn game_canvas(app: &App) -> impl Widget + '_ {
 fn draw_info(app: &App) -> impl Widget + '_ {
     Paragraph::new(format!(
         "torque: {} x: {} y: {}",
-        app.get_ball_torque(),
-        app.get_ball_x(),
-        app.get_ball_y()
+        app.game.get_rear_wheel_torque(),
+        app.game.get_car_body_x(),
+        app.game.get_car_body_y()
     ))
     .block(
         Block::bordered()

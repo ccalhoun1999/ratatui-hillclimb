@@ -1,6 +1,7 @@
 use nalgebra::SVector;
 // use rapier2d_f64::counters::Timer;
-use rapier2d_f64::dynamics::RigidBodyHandle;
+use rapier2d_f64::dynamics::{RevoluteJointBuilder, RigidBodyHandle};
+use rapier2d_f64::na::point;
 use rapier2d_f64::prelude::nalgebra;
 use rapier2d_f64::prelude::{
     vector, CCDSolver, ColliderBuilder, ColliderSet, DefaultBroadPhase, ImpulseJointSet,
@@ -12,7 +13,9 @@ pub struct Game {
     gravity: SVector<f64, 2>,
     rigid_body_set: RigidBodySet,
     collider_set: ColliderSet,
-    ball_body_handle: RigidBodyHandle,
+    car_body_handle: RigidBodyHandle,
+    front_wheel_handle: RigidBodyHandle,
+    rear_wheel_handle: RigidBodyHandle,
     integration_parameters: IntegrationParameters,
     physics_pipeline: PhysicsPipeline,
     island_manager: IslandManager,
@@ -31,19 +34,68 @@ impl Game {
     pub fn new() -> Game {
         let mut rigid_body_set = RigidBodySet::new();
         let mut collider_set = ColliderSet::new();
+        let mut impulse_joint_set = ImpulseJointSet::new();
 
-        /* create the ground, TODO: convert to procedural terrain */
-        let collider = ColliderBuilder::cuboid(100.0, 1.0).build();
+        // create the ground
+        // TODO: convert to procedural terrain
+        let collider = ColliderBuilder::cuboid(100.0, 1.0)
+            // .collision_groups(InteractionGroups::new(Group::GROUP_2, Group::GROUP_1))
+            .build();
         collider_set.insert(collider);
 
-        /* Create the bouncing ball. */
-        let rigid_body = RigidBodyBuilder::dynamic()
+        let car_body = RigidBodyBuilder::dynamic()
+            .translation(vector![0.0, 10.0])
+            .linear_damping(0.5)
+            .build();
+        let car_body_collider = ColliderBuilder::cuboid(1.0, 1.0)
+            // .collision_groups(InteractionGroups::new(Group::GROUP_1, Group::GROUP_2))
+            .build();
+        let car_body_handle = rigid_body_set.insert(car_body);
+        collider_set.insert_with_parent(car_body_collider, car_body_handle, &mut rigid_body_set);
+
+        let rear_wheel = RigidBodyBuilder::dynamic()
             .translation(vector![0.0, 10.0])
             .angular_damping(1.0)
             .build();
-        let collider = ColliderBuilder::ball(0.5).restitution(0.7).build();
-        let ball_body_handle = rigid_body_set.insert(rigid_body);
-        collider_set.insert_with_parent(collider, ball_body_handle, &mut rigid_body_set);
+        let rear_wheel_collider = ColliderBuilder::ball(6.0)
+            .restitution(0.7)
+            // .collision_groups(InteractionGroups::new(Group::GROUP_1, Group::GROUP_2))
+            .build();
+        let rear_wheel_handle = rigid_body_set.insert(rear_wheel);
+        collider_set.insert_with_parent(
+            rear_wheel_collider,
+            rear_wheel_handle,
+            &mut rigid_body_set,
+        );
+
+        let front_wheel = RigidBodyBuilder::dynamic()
+            .translation(vector![40.0, 10.0])
+            .angular_damping(1.0)
+            .build();
+        let front_wheel_collider = ColliderBuilder::ball(6.0)
+            // .restitution(0.7)
+            // .collision_groups(InteractionGroups::new(Group::GROUP_1, Group::GROUP_2))
+            .build();
+        let front_wheel_handle = rigid_body_set.insert(front_wheel);
+        collider_set.insert_with_parent(
+            front_wheel_collider,
+            front_wheel_handle,
+            &mut rigid_body_set,
+        );
+
+        let rear_wheel_joint = RevoluteJointBuilder::new()
+            .local_anchor1(point![0.0, 0.0])
+            .local_anchor2(point![0.0, 0.0])
+            .contacts_enabled(false)
+            .build();
+        impulse_joint_set.insert(rear_wheel_handle, car_body_handle, rear_wheel_joint, true);
+
+        let front_wheel_joint = RevoluteJointBuilder::new()
+            .local_anchor1(point![0.0, 0.0])
+            .local_anchor2(point![40.0, 0.0])
+            .contacts_enabled(false)
+            .build();
+        impulse_joint_set.insert(front_wheel_handle, car_body_handle, front_wheel_joint, true);
 
         // let mut timer = Timer::new();
         // timer.start();
@@ -52,13 +104,15 @@ impl Game {
             gravity: vector![0.0, -9.81],
             rigid_body_set,
             collider_set,
-            ball_body_handle,
+            car_body_handle,
+            front_wheel_handle,
+            rear_wheel_handle,
             integration_parameters: IntegrationParameters::default(),
             physics_pipeline: PhysicsPipeline::new(),
             island_manager: IslandManager::new(),
             broad_phase: DefaultBroadPhase::new(),
             narrow_phase: NarrowPhase::new(),
-            impulse_joint_set: ImpulseJointSet::new(),
+            impulse_joint_set,
             multibody_joint_set: MultibodyJointSet::new(),
             ccd_solver: CCDSolver::new(),
             query_pipeline: QueryPipeline::new(),
@@ -91,30 +145,50 @@ impl Game {
             &(),
         );
 
-        self.reset_torque();
+        // self.reset_torque();
         // self.timer.resume();
 
         // let ball_body = &self.rigid_body_set[self.ball_body_handle];
         // println!("Ball altitude: {}", ball_body.translation().y);
     }
 
-    pub fn get_ball_torque(&self) -> f64 {
-        self.rigid_body_set[self.ball_body_handle].user_torque()
+    pub fn get_rear_wheel_torque(&self) -> f64 {
+        self.rigid_body_set[self.rear_wheel_handle].user_torque()
     }
 
-    pub fn get_ball_x(&self) -> f64 {
-        self.rigid_body_set[self.ball_body_handle].translation().x
+    pub fn get_car_body_x(&self) -> f64 {
+        self.rigid_body_set[self.car_body_handle].translation().x
     }
 
-    pub fn get_ball_y(&self) -> f64 {
-        self.rigid_body_set[self.ball_body_handle].translation().y
+    pub fn get_car_body_y(&self) -> f64 {
+        self.rigid_body_set[self.car_body_handle].translation().y
+    }
+
+    pub fn get_car_body_angle(&self) -> f64 {
+        self.rigid_body_set[self.car_body_handle].rotation().angle()
+    }
+
+    pub fn get_front_wheel_x(&self) -> f64 {
+        self.rigid_body_set[self.front_wheel_handle].translation().x
+    }
+
+    pub fn get_front_wheel_y(&self) -> f64 {
+        self.rigid_body_set[self.front_wheel_handle].translation().y
+    }
+
+    pub fn get_rear_wheel_x(&self) -> f64 {
+        self.rigid_body_set[self.rear_wheel_handle].translation().x
+    }
+
+    pub fn get_rear_wheel_y(&self) -> f64 {
+        self.rigid_body_set[self.rear_wheel_handle].translation().y
     }
 
     pub fn apply_torque(&mut self, torque: f64) {
-        self.rigid_body_set[self.ball_body_handle].add_torque(torque, true);
+        self.rigid_body_set[self.rear_wheel_handle].add_torque(torque, true);
     }
 
     pub fn reset_torque(&mut self) {
-        self.rigid_body_set[self.ball_body_handle].reset_torques(true);
+        self.rigid_body_set[self.rear_wheel_handle].reset_torques(true);
     }
 }

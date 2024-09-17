@@ -83,18 +83,6 @@ impl App {
 
         Ok(())
     }
-
-    pub fn get_ball_torque(&self) -> f64 {
-        self.game.get_ball_torque()
-    }
-
-    pub fn get_ball_x(&self) -> f64 {
-        self.game.get_ball_x()
-    }
-
-    pub fn get_ball_y(&self) -> f64 {
-        self.game.get_ball_y()
-    }
 }
 
 impl App {
@@ -105,8 +93,8 @@ impl App {
         match action {
             Action::Quit => self.quitting = true,
             Action::Tick => self.game.step_physics(),
-            Action::Accelerate => self.game.apply_torque(10.0),
-            Action::Deccelerate => self.game.apply_torque(-10.0),
+            Action::Accelerate => self.game.apply_torque(5000.0),
+            Action::Deccelerate => self.game.apply_torque(-5000.0),
             // Action::None => self.game.apply_torque(-2.0),
             _ => {}
         };
