@@ -177,24 +177,25 @@ fn game_canvas(app: &App) -> impl Widget + '_ {
         )
         .marker(app.marker)
         .paint(|ctx| {
-            let car_y = app.get_ball_height();
+            let car_x = app.get_ball_x();
+            let car_y = app.get_ball_y();
             // TODO: Refactor drawing the car out to a function that
             // takes the game state for location and sizes
             ctx.draw(&Rectangle {
-                x: 0.0,
+                x: car_x,
                 y: car_y,
                 width: 40.0,
                 height: 12.0,
                 color: Color::White,
             });
             ctx.draw(&Circle {
-                x: 0.0,
+                x: car_x,
                 y: car_y,
                 radius: 6.0,
                 color: Color::Black,
             });
             ctx.draw(&Circle {
-                x: 40.0,
+                x: car_x + 40.0,
                 y: car_y,
                 radius: 6.0,
                 color: Color::Black,
@@ -205,7 +206,13 @@ fn game_canvas(app: &App) -> impl Widget + '_ {
 }
 
 fn draw_info(app: &App) -> impl Widget + '_ {
-    Paragraph::new(app.get_ball_height().to_string()).block(
+    Paragraph::new(format!(
+        "torque: {} x: {} y: {}",
+        app.get_ball_torque(),
+        app.get_ball_x(),
+        app.get_ball_y()
+    ))
+    .block(
         Block::bordered()
             .border_type(BorderType::Rounded)
             .title("Game Info"),

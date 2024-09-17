@@ -18,6 +18,8 @@ pub enum Action {
     Tick,
     Quit,
     Render,
+    Accelerate,
+    Deccelerate,
 }
 
 pub struct App {
@@ -82,8 +84,16 @@ impl App {
         Ok(())
     }
 
-    pub fn get_ball_height(&self) -> f64 {
-        self.game.get_ball_height()
+    pub fn get_ball_torque(&self) -> f64 {
+        self.game.get_ball_torque()
+    }
+
+    pub fn get_ball_x(&self) -> f64 {
+        self.game.get_ball_x()
+    }
+
+    pub fn get_ball_y(&self) -> f64 {
+        self.game.get_ball_y()
     }
 }
 
@@ -95,6 +105,9 @@ impl App {
         match action {
             Action::Quit => self.quitting = true,
             Action::Tick => self.game.step_physics(),
+            Action::Accelerate => self.game.apply_torque(10.0),
+            Action::Deccelerate => self.game.apply_torque(-10.0),
+            // Action::None => self.game.apply_torque(-2.0),
             _ => {}
         };
 
@@ -107,7 +120,9 @@ impl App {
             if key.kind != event::KeyEventKind::Release {
                 return match key.code {
                     KeyCode::Char('q') => Action::Quit,
-                    _ => return Action::None,
+                    KeyCode::Right => Action::Accelerate,
+                    KeyCode::Left => Action::Deccelerate,
+                    _ => Action::None,
                 };
             }
         };

@@ -39,6 +39,7 @@ impl Game {
         /* Create the bouncing ball. */
         let rigid_body = RigidBodyBuilder::dynamic()
             .translation(vector![0.0, 10.0])
+            .angular_damping(1.0)
             .build();
         let collider = ColliderBuilder::ball(0.5).restitution(0.7).build();
         let ball_body_handle = rigid_body_set.insert(rigid_body);
@@ -89,13 +90,31 @@ impl Game {
             &(),
             &(),
         );
+
+        self.reset_torque();
         // self.timer.resume();
 
         // let ball_body = &self.rigid_body_set[self.ball_body_handle];
         // println!("Ball altitude: {}", ball_body.translation().y);
     }
 
-    pub fn get_ball_height(&self) -> f64 {
+    pub fn get_ball_torque(&self) -> f64 {
+        self.rigid_body_set[self.ball_body_handle].user_torque()
+    }
+
+    pub fn get_ball_x(&self) -> f64 {
+        self.rigid_body_set[self.ball_body_handle].translation().x
+    }
+
+    pub fn get_ball_y(&self) -> f64 {
         self.rigid_body_set[self.ball_body_handle].translation().y
+    }
+
+    pub fn apply_torque(&mut self, torque: f64) {
+        self.rigid_body_set[self.ball_body_handle].add_torque(torque, true);
+    }
+
+    pub fn reset_torque(&mut self) {
+        self.rigid_body_set[self.ball_body_handle].reset_torques(true);
     }
 }
