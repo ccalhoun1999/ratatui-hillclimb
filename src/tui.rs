@@ -5,7 +5,7 @@ use ratatui::{
     layout::{Constraint, Layout},
     style::Color,
     widgets::{
-        canvas::{Canvas, Circle, Line, Rectangle},
+        canvas::{Canvas, Circle, Line},
         Block, BorderType, Paragraph, Widget,
     },
     Frame,

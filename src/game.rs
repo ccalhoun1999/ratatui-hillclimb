@@ -35,6 +35,7 @@ impl Game {
         let mut rigid_body_set = RigidBodySet::new();
         let mut collider_set = ColliderSet::new();
         let mut impulse_joint_set = ImpulseJointSet::new();
+        let mut multibody_joint_set = MultibodyJointSet::new();
 
         // create the ground
         // TODO: convert to procedural terrain
@@ -45,17 +46,17 @@ impl Game {
 
         let car_body = RigidBodyBuilder::dynamic()
             .translation(vector![0.0, 10.0])
-            .linear_damping(0.5)
+            // .linear_damping(0.5)
             .build();
-        let car_body_collider = ColliderBuilder::cuboid(1.0, 1.0)
+        let car_body_collider = ColliderBuilder::cuboid(40.0, 12.0)
             // .collision_groups(InteractionGroups::new(Group::GROUP_1, Group::GROUP_2))
             .build();
         let car_body_handle = rigid_body_set.insert(car_body);
         collider_set.insert_with_parent(car_body_collider, car_body_handle, &mut rigid_body_set);
 
         let rear_wheel = RigidBodyBuilder::dynamic()
-            .translation(vector![0.0, 10.0])
-            .angular_damping(1.0)
+            .translation(vector![-20.0, 10.0])
+            // .angular_damping(1.0)
             .build();
         let rear_wheel_collider = ColliderBuilder::ball(6.0)
             .restitution(0.7)
@@ -69,8 +70,8 @@ impl Game {
         );
 
         let front_wheel = RigidBodyBuilder::dynamic()
-            .translation(vector![40.0, 10.0])
-            .angular_damping(1.0)
+            .translation(vector![20.0, 10.0])
+            // .angular_damping(1.0)
             .build();
         let front_wheel_collider = ColliderBuilder::ball(6.0)
             // .restitution(0.7)
@@ -84,18 +85,29 @@ impl Game {
         );
 
         let rear_wheel_joint = RevoluteJointBuilder::new()
-            .local_anchor1(point![0.0, 0.0])
+            .local_anchor1(point![-20.0, 0.0])
             .local_anchor2(point![0.0, 0.0])
             .contacts_enabled(false)
-            .build();
-        impulse_joint_set.insert(rear_wheel_handle, car_body_handle, rear_wheel_joint, true);
+            // .motor_velocity(1000.0, 100.5)
+            .build()
+            .data;
+        // impulse_joint_set.insert(rear_wheel_handle, car_body_handle, rear_wheel_joint, true);
+        impulse_joint_set.insert(car_body_handle, rear_wheel_handle, rear_wheel_joint, true);
+        // multibody_joint_set
+        //     .insert(car_body_handle, rear_wheel_handle, rear_wheel_joint, true)
+        //     .unwrap();
 
         let front_wheel_joint = RevoluteJointBuilder::new()
-            .local_anchor1(point![0.0, 0.0])
-            .local_anchor2(point![40.0, 0.0])
+            .local_anchor1(point![20.0, 0.0])
+            .local_anchor2(point![0.0, 0.0])
             .contacts_enabled(false)
-            .build();
-        impulse_joint_set.insert(front_wheel_handle, car_body_handle, front_wheel_joint, true);
+            .build()
+            .data;
+        // impulse_joint_set.insert(front_wheel_handle, car_body_handle, front_wheel_joint, true);
+        impulse_joint_set.insert(car_body_handle, front_wheel_handle, front_wheel_joint, true);
+        // multibody_joint_set
+        //     .insert(car_body_handle, front_wheel_handle, front_wheel_joint, true)
+        //     .unwrap();
 
         // let mut timer = Timer::new();
         // timer.start();
@@ -113,7 +125,7 @@ impl Game {
             broad_phase: DefaultBroadPhase::new(),
             narrow_phase: NarrowPhase::new(),
             impulse_joint_set,
-            multibody_joint_set: MultibodyJointSet::new(),
+            multibody_joint_set,
             ccd_solver: CCDSolver::new(),
             query_pipeline: QueryPipeline::new(),
             // timer,
@@ -188,7 +200,7 @@ impl Game {
         self.rigid_body_set[self.rear_wheel_handle].add_torque(torque, true);
     }
 
-    pub fn reset_torque(&mut self) {
-        self.rigid_body_set[self.rear_wheel_handle].reset_torques(true);
-    }
+    // pub fn reset_torque(&mut self) {
+    // self.rigid_body_set[self.rear_wheel_handle].reset_torques(true);
+    // }
 }
