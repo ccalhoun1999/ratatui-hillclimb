@@ -182,54 +182,76 @@ fn game_canvas(app: &App) -> impl Widget + '_ {
             // Draw the car body
             let car = app.game.get_car();
             let car_body_angle = app.game.get_car_body_angle();
-            let car_body_vertical_angle = car_body_angle * (3.1415 / 2.0);
-            let bottom_left = [app.game.get_car_body_x(), app.game.get_car_body_y()];
-            let bottom_right = [
-                bottom_left[0] + car_body_angle.cos() * car.body_width,
-                bottom_left[1] + car_body_angle.sin() * car.body_width,
-            ];
-            let top_left = [
-                bottom_left[0] + car_body_vertical_angle.cos() * car.body_height,
-                bottom_left[0] + car_body_vertical_angle.sin() * car.body_height,
-            ];
-            let top_right = [
-                bottom_right[0] + car_body_vertical_angle.cos() * car.body_height,
-                bottom_right[0] + car_body_vertical_angle.sin() * car.body_height,
-            ];
+            // let car_body_vertical_angle = car_body_angle * (3.1415 / 2.0);
+            let car_center = (app.game.get_car_body_x(), app.game.get_car_body_y());
+            let top_right = (
+                car_center.0 + ((car.body_half_width) * car_body_angle.cos())
+                    - ((car.body_half_height) * car_body_angle.sin()),
+                car_center.1
+                    + ((car.body_half_width) * car_body_angle.sin())
+                    + ((car.body_half_height) * car_body_angle.cos()),
+            );
+            let top_left = (
+                car_center.0
+                    - ((car.body_half_width) * car_body_angle.cos())
+                    - ((car.body_half_height) * car_body_angle.sin()),
+                car_center.1 - ((car.body_half_width) * car_body_angle.sin())
+                    + ((car.body_half_height) * car_body_angle.cos()),
+            );
+            let bottom_right = (
+                car_center.0
+                    + ((car.body_half_width) * car_body_angle.cos())
+                    + ((car.body_half_height) * car_body_angle.sin()),
+                car_center.1 + ((car.body_half_width) * car_body_angle.sin())
+                    - ((car.body_half_height) * car_body_angle.cos()),
+            );
+            let bottom_left = (
+                car_center.0 - ((car.body_half_width) * car_body_angle.cos())
+                    + ((car.body_half_height) * car_body_angle.sin()),
+                car_center.1
+                    - ((car.body_half_width) * car_body_angle.sin())
+                    - ((car.body_half_height) * car_body_angle.cos()),
+            );
+
+            // Draw car box
             ctx.draw(&Line {
-                x1: bottom_left[0],
-                y1: bottom_left[1],
-                x2: bottom_right[0],
-                y2: bottom_right[1],
+                x1: bottom_left.0,
+                y1: bottom_left.1,
+                x2: bottom_right.0,
+                y2: bottom_right.1,
                 color: Color::White,
             });
-            // ctx.draw(&Line {
-            //     x1: top_left[0],
-            //     y1: top_left[1],
-            //     x2: top_right[0],
-            //     y2: top_right[1],
-            //     color: Color::White,
-            // });
-            // ctx.draw(&Line {
-            //     x1: bottom_left[0],
-            //     y1: bottom_left[1],
-            //     x2: top_left[0],
-            //     y2: top_left[1],
-            //     color: Color::White,
-            // });
-            // ctx.draw(&Line {
-            //     x1: bottom_right[0],
-            //     y1: bottom_right[1],
-            //     x2: top_right[0],
-            //     y2: top_right[1],
-            //     color: Color::White,
-            // });
+            ctx.draw(&Line {
+                x1: top_left.0,
+                y1: top_left.1,
+                x2: top_right.0,
+                y2: top_right.1,
+                color: Color::White,
+            });
+            ctx.draw(&Line {
+                x1: bottom_left.0,
+                y1: bottom_left.1,
+                x2: top_left.0,
+                y2: top_left.1,
+                color: Color::White,
+            });
+            ctx.draw(&Line {
+                x1: bottom_right.0,
+                y1: bottom_right.1,
+                x2: top_right.0,
+                y2: top_right.1,
+                color: Color::White,
+            });
+
+            // Draw front wheel
             ctx.draw(&Circle {
                 x: app.game.get_front_wheel_x(),
                 y: app.game.get_front_wheel_y(),
                 radius: car.rear_wheel_radius,
                 color: Color::Black,
             });
+
+            // Draw rear wheel
             ctx.draw(&Circle {
                 x: app.game.get_rear_wheel_x(),
                 y: app.game.get_rear_wheel_y(),

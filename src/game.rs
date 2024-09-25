@@ -10,24 +10,24 @@ use rapier2d_f64::prelude::{
 };
 
 pub struct Car {
-    pub rear_wheel_radius: f64,  // 6
-    pub front_wheel_radius: f64, // 6
-    pub body_width: f64,         // 3
-    pub body_height: f64,        // 40
+    pub rear_wheel_radius: f64,
+    pub front_wheel_radius: f64,
+    pub body_half_width: f64,
+    pub body_half_height: f64,
 }
 
 impl Car {
     pub fn new(
         rear_wheel_radius: f64,
         front_wheel_radius: f64,
-        body_width: f64,
-        body_height: f64,
+        body_half_width: f64,
+        body_half_height: f64,
     ) -> Car {
         Car {
             rear_wheel_radius,
             front_wheel_radius,
-            body_width,
-            body_height,
+            body_half_width,
+            body_half_height,
         }
     }
 }
@@ -70,9 +70,9 @@ impl Game {
 
         let car_body = RigidBodyBuilder::dynamic()
             .translation(vector![0.0, 10.0])
-            // .linear_damping(0.5)
+            .linear_damping(0.5)
             .build();
-        let car_body_collider = ColliderBuilder::cuboid(car.body_width, car.body_height)
+        let car_body_collider = ColliderBuilder::cuboid(car.body_half_width, car.body_half_height)
             // .collision_groups(InteractionGroups::new(Group::GROUP_1, Group::GROUP_2))
             .build();
         let car_body_handle = rigid_body_set.insert(car_body);
@@ -80,7 +80,7 @@ impl Game {
 
         let rear_wheel = RigidBodyBuilder::dynamic()
             .translation(vector![0.0, 10.0])
-            // .angular_damping(1.0)
+            .angular_damping(1.0)
             .build();
         let rear_wheel_collider = ColliderBuilder::ball(car.rear_wheel_radius)
             .restitution(0.7)
@@ -94,8 +94,8 @@ impl Game {
         );
 
         let front_wheel = RigidBodyBuilder::dynamic()
-            .translation(vector![car.body_width, 10.0])
-            // .angular_damping(1.0)
+            .translation(vector![car.body_half_width, 10.0])
+            .angular_damping(1.0)
             .build();
         let front_wheel_collider = ColliderBuilder::ball(car.front_wheel_radius)
             // .restitution(0.7)
@@ -109,7 +109,7 @@ impl Game {
         );
 
         let rear_wheel_joint = RevoluteJointBuilder::new()
-            .local_anchor1(point![0.0, -car.body_height])
+            .local_anchor1(point![-car.body_half_width, -car.body_half_height])
             .local_anchor2(point![0.0, 0.0])
             .contacts_enabled(false)
             // .motor_velocity(1000.0, 100.5)
@@ -122,7 +122,7 @@ impl Game {
         //     .unwrap();
 
         let front_wheel_joint = RevoluteJointBuilder::new()
-            .local_anchor1(point![car.body_width, -car.body_height])
+            .local_anchor1(point![car.body_half_width, -car.body_half_height])
             .local_anchor2(point![0.0, 0.0])
             .contacts_enabled(false)
             .build()

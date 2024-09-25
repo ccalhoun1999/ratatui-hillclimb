@@ -35,7 +35,7 @@ pub struct App {
 impl Default for App {
     fn default() -> App {
         let (action_tx, action_rx) = mpsc::unbounded_channel::<Action>();
-        let car = Car::new(6.0, 6.0, 40.0, 3.0);
+        let car = Car::new(6.0, 6.0, 20.0, 7.0);
         App {
             // TODO: Customize the marker, I'd like braille but
             // it breaks overlapping colors
