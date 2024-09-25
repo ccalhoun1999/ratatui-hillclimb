@@ -9,7 +9,31 @@ use rapier2d_f64::prelude::{
     QueryPipeline, RigidBodyBuilder, RigidBodySet,
 };
 
+pub struct Car {
+    pub rear_wheel_radius: f64,  // 6
+    pub front_wheel_radius: f64, // 6
+    pub body_width: f64,         // 3
+    pub body_height: f64,        // 40
+}
+
+impl Car {
+    pub fn new(
+        rear_wheel_radius: f64,
+        front_wheel_radius: f64,
+        body_width: f64,
+        body_height: f64,
+    ) -> Car {
+        Car {
+            rear_wheel_radius,
+            front_wheel_radius,
+            body_width,
+            body_height,
+        }
+    }
+}
+
 pub struct Game {
+    car: Car,
     gravity: SVector<f64, 2>,
     rigid_body_set: RigidBodySet,
     collider_set: ColliderSet,
@@ -31,11 +55,11 @@ pub struct Game {
 }
 
 impl Game {
-    pub fn new() -> Game {
+    pub fn new(car: Car) -> Game {
         let mut rigid_body_set = RigidBodySet::new();
         let mut collider_set = ColliderSet::new();
         let mut impulse_joint_set = ImpulseJointSet::new();
-        let mut multibody_joint_set = MultibodyJointSet::new();
+        let multibody_joint_set = MultibodyJointSet::new();
 
         // create the ground
         // TODO: convert to procedural terrain
@@ -48,17 +72,17 @@ impl Game {
             .translation(vector![0.0, 10.0])
             // .linear_damping(0.5)
             .build();
-        let car_body_collider = ColliderBuilder::cuboid(40.0, 12.0)
+        let car_body_collider = ColliderBuilder::cuboid(car.body_width, car.body_height)
             // .collision_groups(InteractionGroups::new(Group::GROUP_1, Group::GROUP_2))
             .build();
         let car_body_handle = rigid_body_set.insert(car_body);
         collider_set.insert_with_parent(car_body_collider, car_body_handle, &mut rigid_body_set);
 
         let rear_wheel = RigidBodyBuilder::dynamic()
-            .translation(vector![-20.0, 10.0])
+            .translation(vector![0.0, 10.0])
             // .angular_damping(1.0)
             .build();
-        let rear_wheel_collider = ColliderBuilder::ball(6.0)
+        let rear_wheel_collider = ColliderBuilder::ball(car.rear_wheel_radius)
             .restitution(0.7)
             // .collision_groups(InteractionGroups::new(Group::GROUP_1, Group::GROUP_2))
             .build();
@@ -70,10 +94,10 @@ impl Game {
         );
 
         let front_wheel = RigidBodyBuilder::dynamic()
-            .translation(vector![20.0, 10.0])
+            .translation(vector![car.body_width, 10.0])
             // .angular_damping(1.0)
             .build();
-        let front_wheel_collider = ColliderBuilder::ball(6.0)
+        let front_wheel_collider = ColliderBuilder::ball(car.front_wheel_radius)
             // .restitution(0.7)
             // .collision_groups(InteractionGroups::new(Group::GROUP_1, Group::GROUP_2))
             .build();
@@ -85,7 +109,7 @@ impl Game {
         );
 
         let rear_wheel_joint = RevoluteJointBuilder::new()
-            .local_anchor1(point![-20.0, 0.0])
+            .local_anchor1(point![0.0, -car.body_height])
             .local_anchor2(point![0.0, 0.0])
             .contacts_enabled(false)
             // .motor_velocity(1000.0, 100.5)
@@ -98,7 +122,7 @@ impl Game {
         //     .unwrap();
 
         let front_wheel_joint = RevoluteJointBuilder::new()
-            .local_anchor1(point![20.0, 0.0])
+            .local_anchor1(point![car.body_width, -car.body_height])
             .local_anchor2(point![0.0, 0.0])
             .contacts_enabled(false)
             .build()
@@ -113,6 +137,7 @@ impl Game {
         // timer.start();
 
         Game {
+            car,
             gravity: vector![0.0, -9.81],
             rigid_body_set,
             collider_set,
@@ -162,6 +187,10 @@ impl Game {
 
         // let ball_body = &self.rigid_body_set[self.ball_body_handle];
         // println!("Ball altitude: {}", ball_body.translation().y);
+    }
+
+    pub fn get_car(&self) -> &Car {
+        &self.car
     }
 
     pub fn get_rear_wheel_torque(&self) -> f64 {

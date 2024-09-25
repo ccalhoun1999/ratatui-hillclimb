@@ -180,20 +180,21 @@ fn game_canvas(app: &App) -> impl Widget + '_ {
             // TODO: Refactor drawing the car out to a function that
             // takes the game state for location and sizes
             // Draw the car body
+            let car = app.game.get_car();
             let car_body_angle = app.game.get_car_body_angle();
             let car_body_vertical_angle = car_body_angle * (3.1415 / 2.0);
             let bottom_left = [app.game.get_car_body_x(), app.game.get_car_body_y()];
             let bottom_right = [
-                bottom_left[0] + car_body_angle.cos() * 40.0,
-                bottom_left[1] + car_body_angle.sin() * 40.0,
+                bottom_left[0] + car_body_angle.cos() * car.body_width,
+                bottom_left[1] + car_body_angle.sin() * car.body_width,
             ];
             let top_left = [
-                bottom_left[0] + car_body_vertical_angle.cos() * 12.0,
-                bottom_left[0] + car_body_vertical_angle.sin() * 12.0,
+                bottom_left[0] + car_body_vertical_angle.cos() * car.body_height,
+                bottom_left[0] + car_body_vertical_angle.sin() * car.body_height,
             ];
             let top_right = [
-                bottom_right[0] + car_body_vertical_angle.cos() * 12.0,
-                bottom_right[0] + car_body_vertical_angle.sin() * 12.0,
+                bottom_right[0] + car_body_vertical_angle.cos() * car.body_height,
+                bottom_right[0] + car_body_vertical_angle.sin() * car.body_height,
             ];
             ctx.draw(&Line {
                 x1: bottom_left[0],
@@ -226,13 +227,13 @@ fn game_canvas(app: &App) -> impl Widget + '_ {
             ctx.draw(&Circle {
                 x: app.game.get_front_wheel_x(),
                 y: app.game.get_front_wheel_y(),
-                radius: 6.0,
+                radius: car.rear_wheel_radius,
                 color: Color::Black,
             });
             ctx.draw(&Circle {
                 x: app.game.get_rear_wheel_x(),
                 y: app.game.get_rear_wheel_y(),
-                radius: 6.0,
+                radius: car.front_wheel_radius,
                 color: Color::Black,
             });
         })

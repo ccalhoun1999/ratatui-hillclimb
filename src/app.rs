@@ -8,7 +8,7 @@ use ratatui::{
 use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 
 use crate::{
-    game::Game,
+    game::{Car, Game},
     tui::{ui, Event, Tui},
 };
 
@@ -35,13 +35,14 @@ pub struct App {
 impl Default for App {
     fn default() -> App {
         let (action_tx, action_rx) = mpsc::unbounded_channel::<Action>();
+        let car = Car::new(6.0, 6.0, 40.0, 3.0);
         App {
             // TODO: Customize the marker, I'd like braille but
             // it breaks overlapping colors
             marker: Marker::Dot,
             // x: 0.0,
             // y: 0.0,
-            game: Game::new(),
+            game: Game::new(car),
             quitting: false,
             action_tx,
             action_rx,
